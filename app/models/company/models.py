@@ -15,9 +15,20 @@ class Company(Base):
     name: Mapped[str] = mapped_column(unique=True)
     technical_map: Mapped[str | None]
     is_active: Mapped[bool] = mapped_column(default=False)
+    
+    workers: Mapped[list["Worker"]] = relationship("Worker", back_populates="companies", secondary="company_worker")
+    begin_shifts: Mapped[list["BeginShift"]] = relationship("BeginShift", back_populates="company")
 
     def __repr__(self) -> str:
         return f"{self.id}#{self.name}"
+    
+
+class CompanyWorker(Base):
+    __tablename__ = 'company_worker'
+    
+    worker_id: Mapped[int] = mapped_column(ForeignKey("worker.id", ondelete="SET NULL"), primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), primary_key=True)
+    created: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
 
 
 class CompanyState(Base):
@@ -43,7 +54,8 @@ class BeginShift(CompanyState):
     __tablename__ = "begin_shift"
 
     live: Mapped[bool] = mapped_column(default=False)
-
+    company: Mapped["Company"] = relationship("Company", back_populates="begin_shifts")
+    
     def __repr__(self) -> str:
         return f"{self.id}#{self.summa} рублей"
 

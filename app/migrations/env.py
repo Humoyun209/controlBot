@@ -11,7 +11,7 @@ sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
 from db import DATABASE_URL, Base
 from models.user.models import User, Worker
-from models.company.models import Company, BeginShift, EndShift, CompanyState
+from models.company.models import Company, BeginShift, EndShift, CompanyState,CompanyWorker
 
 
 
