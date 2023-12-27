@@ -33,14 +33,14 @@ router = Router()
 async def end_shift_start(message: Message):
     user_id = message.from_user.id
     user = await UserDAO.get_user(user_id)
-    data = await WorkerDAO.get_worker_with_companies_for_shift(user.worker.id, True)
+    data = await WorkerDAO.get_worker_with_companies_for_shift(worker_id=user.worker.id, live=True)
     if data:
         keyboard = set_shift_in_company_kb(data, begin=False)
         await message.answer("В какой компании хотите закрыть смену",
                             reply_markup=keyboard)
     else:
         await message.answer("Компании не найдено, чтобы закончить смену /begin_shift")
-        
+   
 
 @router.callback_query(F.data.startswith("choose_company_for_end_shift"), IsUser())
 async def choose_company_for_end_shift(cb: CallbackQuery):
