@@ -14,10 +14,15 @@ class Company(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto")
     name: Mapped[str] = mapped_column(unique=True)
     technical_map: Mapped[str | None]
+    live: Mapped[bool | None] = mapped_column(default=False)
     is_active: Mapped[bool] = mapped_column(default=False)
-    
     workers: Mapped[list["Worker"]] = relationship("Worker", back_populates="companies", secondary="company_worker")
     begin_shifts: Mapped[list["BeginShift"]] = relationship("BeginShift", back_populates="company")
+    
+    def __eq__(self, other: "Company") -> bool:
+        if isinstance(other, Company):
+            return self.id == other.id
+        return False
 
     def __repr__(self) -> str:
         return f"{self.id}#{self.name}"
@@ -52,8 +57,7 @@ class CompanyState(Base):
 
 class BeginShift(CompanyState):
     __tablename__ = "begin_shift"
-
-    live: Mapped[bool] = mapped_column(default=False)
+    
     company: Mapped["Company"] = relationship("Company", back_populates="begin_shifts")
     
     def __repr__(self) -> str:
