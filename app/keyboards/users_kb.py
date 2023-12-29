@@ -16,12 +16,17 @@ from models.company.models import Company
 BACK_BUTTON = InlineKeyboardButton(text='🔙 Главная', callback_data='TO_HOME_ADMIN')
 
 
-users_manage_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Кальяншики", callback_data="to_worker_user_manage")],
-    [InlineKeyboardButton(text="Недавно активитированные и юзеры", callback_data="to_what_user_manage")],
-    [InlineKeyboardButton(text="Админы", callback_data="to_admin_user_manage")],
-    [BACK_BUTTON]
-])
+def get_user_manage_kb(is_super: bool):
+    builder = InlineKeyboardBuilder()
+    buttons = [
+        InlineKeyboardButton(text="Кальяншики", callback_data="to_worker_user_manage"),
+        InlineKeyboardButton(text="Недавно активитированные и юзеры", callback_data="to_what_user_manage"),
+    ]
+    if is_super:
+        buttons.append(InlineKeyboardButton(text="Админы", callback_data="to_admin_user_manage"))
+    buttons.append(BACK_BUTTON)
+    builder.row(*buttons, width=1)
+    return builder.as_markup()
 
 
 def users_list_kb(users: list[User], prefix: str):

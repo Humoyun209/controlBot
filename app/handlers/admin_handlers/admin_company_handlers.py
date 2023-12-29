@@ -35,14 +35,15 @@ main_menu_admins = [
     BotCommand(command="/company", description="Для управления компаний"),
     BotCommand(command="/users", description="Для управления пользователей"),
     BotCommand(command="/reports", description="Отчёты"),
+    BotCommand(command="/cancel", description="Остановить все процессы"),
 ]
 
 
-@router.message(Command(commands=["start"]), IsAdmin())
+@router.message(Command(commands=["start"]), is_admin)
 async def process_start_user(message: Message, bot: Bot):
     await bot.set_my_commands(main_menu_admins)
-    await message.answer("You are - Admin")
-    
+    await message.answer("Добро пожаловать!\nПосмотрите на меню для управления") 
+
 
 @router.callback_query(
     F.data.startswith("TO_HOME"),

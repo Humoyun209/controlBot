@@ -2,8 +2,6 @@ from aiogram import Bot, Router, F
 from aiogram.types import (
     Message,
     CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
 )
 from aiogram.filters import Command, StateFilter, or_f, and_f
 from aiogram.fsm.context import FSMContext
@@ -22,11 +20,9 @@ from keyboards.users_kb import (
     hookah_users_kb,
     regular_users_kb,
     user_actions_kb,
-    users_list_kb,
     toggle_worker_from_company_kb,
-    users_manage_kb,
+    get_user_manage_kb,
 )
-from states.company import ChangeCompany, CreateCompany
 
 
 router = Router()
@@ -37,8 +33,11 @@ is_admin = or_f(IsAdmin(), IsSuperAdmin())
 
 @router.message(Command(commands=["users"]), or_f(IsAdmin(), IsSuperAdmin()))
 async def get_started_users(message: Message):
-    await message.answer("Пожалуйста, выберите действие:", reply_markup=users_manage_kb)
-    
+    await message.answer(
+        "Пожалуйста, выберите действие:",
+        reply_markup=get_user_manage_kb(is_super=IsSuperAdmin(message.from_user.id)),
+    )
+
 
 @router.callback_query(F.data.startswith("to_worker_user_manage"), is_admin)
 async def get_worker_manage(cb: CallbackQuery):
@@ -46,13 +45,12 @@ async def get_worker_manage(cb: CallbackQuery):
     if len(workers) > 0:
         keyboard = hookah_users_kb(workers)
         await cb.message.answer(
-            "Выберите действие для кальяншиков",
-            reply_markup=keyboard
+            "Выберите действие для кальяншиков", reply_markup=keyboard
         )
     else:
         await cb.message.answer("Кальяншики не найдены!!!")
     await cb.message.delete()
-    
+
 
 @router.callback_query(F.data.startswith("to_what_user_manage"), is_admin)
 async def get_worker_manage(cb: CallbackQuery):
@@ -60,8 +58,7 @@ async def get_worker_manage(cb: CallbackQuery):
     if len(users) > 0:
         keyboard = regular_users_kb(users)
         await cb.message.answer(
-            "Выберите действие для пользователей",
-            reply_markup=keyboard
+            "Выберите действие для пользователей", reply_markup=keyboard
         )
     else:
         await cb.message.answer("Юзеры не найдены!!!")
@@ -74,40 +71,36 @@ async def get_worker_manage(cb: CallbackQuery):
     if len(admins) > 0:
         keyboard = admin_users_kb(admins)
         await cb.message.answer(
-            "Выберите действие для кальяншиков",
-            reply_markup=keyboard
+            "Выберите действие для кальяншиков", reply_markup=keyboard
         )
     else:
         await cb.message.answer("Админы не найдены!!!")
     await cb.message.delete()
-    
+
 
 @router.callback_query(F.data.startswith("hookah_to_actions:"), is_admin)
 async def get_worker_user_manage(cb: CallbackQuery):
     user_id = int(cb.data.split(":")[1])
     await cb.message.answer(
-        "Выберите действие: ",
-        reply_markup=hookah_actions_kb(user_id)
+        "Выберите действие: ", reply_markup=hookah_actions_kb(user_id)
     )
     await cb.message.delete()
-    
-    
+
+
 @router.callback_query(F.data.startswith("user_to_actions:"), is_admin)
 async def get_regular_user_manage(cb: CallbackQuery):
     user_id = int(cb.data.split(":")[1])
     await cb.message.answer(
-        "Выберите действие: ",
-        reply_markup=user_actions_kb(user_id)
+        "Выберите действие: ", reply_markup=user_actions_kb(user_id)
     )
     await cb.message.delete()
-    
+
 
 @router.callback_query(F.data.startswith("admin_to_actions:"), IsSuperAdmin())
 async def get_admin_user_manage(cb: CallbackQuery):
     user_id = int(cb.data.split(":")[1])
     await cb.message.answer(
-        "Выберите действие: ",
-        reply_markup=admin_actions_kb(user_id)
+        "Выберите действие: ", reply_markup=admin_actions_kb(user_id)
     )
     await cb.message.delete()
 
@@ -116,23 +109,20 @@ async def get_admin_user_manage(cb: CallbackQuery):
 async def get_admin_manage(cb: CallbackQuery):
     workers = await UserDAO.get_workers()
     keyboard = hookah_users_kb(workers)
-    await cb.message.answer(
-        "Выберите действие для кальяншиков",
-        reply_markup=keyboard
-    )
+    await cb.message.answer("Выберите действие для кальяншиков", reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("user_to_actions"), is_admin)
 async def anonym_user_actions(cb: CallbackQuery):
     user_id = int(cb.data.split(":")[1])
-    
+
     keyboard = user_actions_kb(user_id)
     await cb.message.answer(
         "Пожалуйста выберите, что хотите делать с пользователем: ",
-        reply_markup=keyboard
+        reply_markup=keyboard,
     )
     await cb.message.delete()
-    
+
 
 @router.callback_query(F.data.startswith("user_delete"), IsSuperAdmin())
 async def delete_user(cb: CallbackQuery):

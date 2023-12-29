@@ -5,6 +5,7 @@ import decimal
 from aiogram import Bot, Router, F
 from aiogram.types import (
     Message,
+    BotCommand,
     CallbackQuery,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -30,9 +31,19 @@ from config import settings_bot
 router = Router()
 
 
+main_menu_workers = [
+    BotCommand(command="/begin_shift", description="Начать смену"),
+    BotCommand(command="/end_shift", description="Закрыть смену"),
+    BotCommand(command="/cancel", description="Остановить все процессы"),
+]
+
+
 @router.message(Command(commands=['start']), IsWorker())
-async def process_start_user(message: Message):
-    await message.answer("You are - Worker")
+async def process_start_worker(message: Message, bot: Bot):
+    await bot.set_my_commands(main_menu_workers)
+    await message.answer(
+        "Добро пожаловать, посмотрите на меню для управления"
+    )
 
 
 @router.message(Command(commands=['begin_shift']), IsWorker())

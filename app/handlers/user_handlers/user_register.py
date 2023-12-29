@@ -42,7 +42,7 @@ async def get_contact_from_user(message: Message, bot: Bot, state: FSMContext):
     keyboard = register_user_kb(**data)
     await bot.send_message(
         chat_id=admin.id,
-        text=f"""Новый пользователь\nID: {data.get('id')}\nUsername: {data.get('username')}\nPhone: {data.get('phone')}""",
+        text=f"""Новый пользователь\nID: {int(data[1])}nUsername: {data.get('username')}\nPhone: {data.get('phone')}""",
         reply_markup=keyboard,
     )
     await message.answer("Спасибо, ждите сообщение админа")
