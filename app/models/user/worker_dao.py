@@ -11,7 +11,11 @@ class WorkerDAO:
     @classmethod
     async def get_worker_by_id(cls, worker_id):
         async with async_session_maker() as session:
-            user = await session.execute(select(Worker).where(Worker.id == worker_id))
+            user = await session.execute(
+                select(Worker)
+                .options(joinedload(Worker.user))
+                .where(Worker.id == worker_id)
+            )
             return user.scalars().first()
 
     @classmethod

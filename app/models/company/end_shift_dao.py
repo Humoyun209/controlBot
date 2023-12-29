@@ -5,9 +5,10 @@ from models.company.models import EndShift
 
 class EndShiftDAO:
     @classmethod
-    async def create_end_shift(cls, **kwargs):
+    async def create_end_shift(cls, **kwargs) -> EndShift:
         async with async_session_maker() as session:
-            await session.execute(
-                insert(EndShift).values(**kwargs)
+            shift = await session.execute(
+                insert(EndShift).values(**kwargs).returning(EndShift)
             )
             await session.commit()
+            return shift.scalars().first()

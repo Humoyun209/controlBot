@@ -12,7 +12,6 @@ from aiogram.fsm.state import default_state, State
 from models.company.end_shift_dao import EndShiftDAO
 
 from keyboards.shift_kb import set_shift_in_company_kb
-from models.user.models import UserStatus
 from states.shift import EndShiftState
 from models.company.begin_shift_dao import BeginShiftDAO
 from models.company.company_dao import CompanyDAO
@@ -192,7 +191,7 @@ async def input_quantity_in_club_end_shift(message: Message, state: FSMContext):
         state=state,
         next_state=EndShiftState.in_club_card,
         update_attr_name='in_club',
-        message_for_next="Отлично!!!\nВведите к-во проданных кальянов в клубе картой"
+        message_for_next="Отлично!!!\nСколько кальянов оплачено картой в клубе?"
     )
     
     
@@ -214,22 +213,44 @@ async def input_quantity_in_club_cash_end_shift(message: Message, state: FSMCont
         state=state,
         next_state=EndShiftState.tips,
         update_attr_name='in_club_cash',
-        message_for_next="Отлично!!!\nВведите чаевых"
+        message_for_next="Отлично!!!\nСколько чаевых оставили на карту?"
     )
     
 
 @router.message(StateFilter(EndShiftState.tips), IsUser())
-async def input_sum_tips_end_shift(message: Message, state: FSMContext):
+async def input_sum_tips_end_shift(message: Message, bot: Bot, state: FSMContext):
     try:
         tips = decimal.Decimal(message.text)
         await state.update_data(tips=tips)
         await state.set_state(default_state)
         data = await state.get_data()
         del data["count_photo"]
-        await EndShiftDAO.create_end_shift(**data)
+        end_shift = await EndShiftDAO.create_end_shift(**data)
         await CompanyDAO.set_shift_to_end(data.get('company_id'))
         
-        await message.answer("Круто, всё ок ")
+        # Отправить сообщение админу
+        company = await CompanyDAO.get_company_by_id(end_shift.company_id)
+        worker = await WorkerDAO.get_worker_by_id(end_shift.worker_id)
+        super_admin = await UserDAO.get_super_admin()
+        photos = [end_shift.photo1, end_shift.photo2, end_shift.photo3, end_shift.photo4]
+        for i, photo in enumerate(photos):
+            if i == 3:
+                await bot.send_photo(
+                super_admin.id,
+                photo, 
+                caption=f"""
+Смена закрылась!!!
+Дата: {end_shift.created.isoformat()}
+Название заведения: {company.name}
+Граммаж табака: {end_shift.grams_of_tobacco}
+Работник: {worker.user.username}
+"""
+            )
+            await bot.send_photo(
+                super_admin.id,
+                photo
+            )
+        await message.answer("Смена закрылась, чтобы открыть смену /begin_shift")
     except decimal.InvalidOperation:
         await message.answer(
             "Пожалуйста, отправьте в виде числа - например: 1000, 10500, 100000"

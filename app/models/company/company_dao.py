@@ -8,6 +8,14 @@ from sqlalchemy.orm import joinedload, selectinload
 
 
 class CompanyDAO:
+    
+    @classmethod
+    async def get_company_by_id(cls, id: int) -> Company:
+        async with async_session_maker() as session:
+            query = select(Company).where(Company.id == id)
+            company = await session.execute(query)
+            return company.scalars().first()
+        
     @classmethod
     async def get_company(cls, name: str) -> Company:
         async with async_session_maker() as session:

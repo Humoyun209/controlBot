@@ -65,7 +65,7 @@ async def start_state_for_begin_shift(cb: CallbackQuery, state: FSMContext):
     worker_id, company_id = int(data[1]), int(data[2])
     await state.update_data(worker_id=worker_id, company_id=company_id)
     await state.set_state(BeginShiftState.photo_group)
-    await cb.message.answer(text="Пожалуйста, отправьте 4 фото одновременно")
+    await cb.message.answer(text="Пожалуйста, отправьте фото рабочего места,чашь, кальянов, каллаудов одновременно")
     await cb.message.delete()
 
 
@@ -111,6 +111,6 @@ async def input_begin_shift_summa(message: Message, state: FSMContext):
         await CompanyDAO.set_shift_to_begin(begin_shift_data.get("company_id"))
         
         await state.set_state(default_state)
-        await message.answer("Спасибо вам, смена началась!!!")
+        await message.answer("Смена открылась, чтобы закрыть смену /end_shift")
     except decimal.InvalidOperation:
         await message.answer("Пожалуйста, отправьте в виде числа - например: 1000, 10500, 100000")

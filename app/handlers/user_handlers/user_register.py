@@ -2,8 +2,6 @@ from aiogram import Bot, Router, F
 from aiogram.types import (
     Message,
     CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
@@ -81,4 +79,3 @@ async def remove_none_user(cb: CallbackQuery, bot: Bot):
     await cb.message.answer(text="Пользователь игнорирован!")
     await cb.message.delete()
     await bot.send_message(user_id, "Админ вас игнорировал!!!")
-    
