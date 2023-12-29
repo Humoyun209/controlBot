@@ -12,7 +12,8 @@ from aiogram.filters import Command, StateFilter, or_f, and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 
-from models.user.user_dao import UserDAO, WorkerDAO
+from models.user.user_dao import UserDAO
+from models.user.worker_dao import WorkerDAO
 from lexicon import ADMINS
 from models.company.company_dao import CompanyDAO
 from models.enums import UserStatus
@@ -30,6 +31,7 @@ from keyboards.users_kb import (
 )
 from states.company import ChangeCompany, CreateCompany
 
+
 router = Router()
 
 is_admin = or_f(IsAdmin(), IsSuperAdmin())
@@ -45,7 +47,7 @@ main_menu_admins = [
 async def process_start_user(message: Message, bot: Bot):
     await bot.set_my_commands(main_menu_admins)
     await message.answer("You are - Admin")
-
+    
 
 @router.callback_query(
     F.data.startswith("TO_HOME"),
@@ -58,14 +60,10 @@ async def to_home_baby(cb: CallbackQuery, state: FSMContext):
 
 @router.message(Command(commands=["company"]), or_f(IsAdmin(), IsSuperAdmin()))
 async def manage_company(message: Message, bot: Bot):
-    await bot.set_my_commands(main_menu_admins)
     await message.answer(
         text="Здесь вы можете управлять компаниями",
         reply_markup=company_main_kb,
     )
-
-
-# ========================== Хендлеры для создания компанию ===============================#
 
 
 @router.callback_query(
@@ -79,7 +77,7 @@ async def create_company_start(cb: CallbackQuery, state: FSMContext):
     await state.set_state(CreateCompany.name)
 
 
-@router.message(or_f(IsAdmin(), IsSuperAdmin()), StateFilter(CreateCompany.name))
+@router.message(is_admin, StateFilter(CreateCompany.name))
 async def create_company_in_db(message: Message, state: FSMContext):
     company_name = message.text
     company = await CompanyDAO.get_company(company_name)
@@ -201,61 +199,3 @@ async def company_change_is_active(cb: CallbackQuery):
     await cb.message.answer_document(
         company.technical_map, caption=f"Техническая карта - {company.name}"
     )
-
-
-# ============================= Управление юзерами ================================ #
-
-
-@router.message(Command(commands=["users"]), or_f(IsAdmin(), IsSuperAdmin()))
-async def get_started_users(message: Message):
-    await message.answer("Пожалуйста, выберите действие:", reply_markup=users_manage_kb)
-
-
-@router.callback_query(F.data == "user_worker_manage", is_admin)
-async def get_user_list(cb: CallbackQuery):
-    anonym_users = await UserDAO.get_users_without_anonyms()
-    keyboard = users_list_kb(anonym_users)
-    await cb.message.answer("Список новых пользователей: ", reply_markup=keyboard)
-    await cb.message.delete()
-
-
-@router.callback_query(F.data.startswith("user_to_actions"), is_admin)
-async def anonym_user_actions(cb: CallbackQuery):
-    user_id = int(cb.data.split(":")[1])
-    
-    keyboard = user_actions_kb(user_id)
-    await cb.message.answer(
-        "Пожалуйста выберите, что хотите делать пользователем: ", reply_markup=keyboard
-    )
-    await cb.message.delete()
-
-
-@router.callback_query(F.data.startswith("user_invite_companies:"), is_admin)
-async def anonym_user_invite_companies(cb: CallbackQuery):
-    user_id = int(cb.data.split(":")[1])
-    worker = await WorkerDAO.worker_create(user_id)
-    print(worker, user_id)
-    await UserDAO.change_user_status(user_id, UserStatus.USER)
-    company_list = await CompanyDAO.get_list_with_workers()
-    keyboard = toggle_worker_from_company_kb(worker, company_list)
-    await cb.message.answer(
-        "Вы можете добавить / удалить работника в компанию",
-        reply_markup=keyboard,
-    )
-    await cb.message.delete()
-
-
-@router.callback_query(F.data.startswith("user_manage_company:"), is_admin)
-async def toggle_worker_company(cb: CallbackQuery):
-    lst = cb.data.split(":")
-    company_name = lst[1].strip()
-    worker_id = int(lst[2].strip())
-    await WorkerDAO.toggle_company_to_worker(worker_id, company_name)
-    worker = await WorkerDAO.get_worker_by_id(worker_id)
-    company_list = await CompanyDAO.get_list_with_workers()
-    keyboard = toggle_worker_from_company_kb(worker, company_list)
-    await cb.message.answer(
-        "Вы можете добавить / удалить работника в компанию",
-        reply_markup=keyboard,
-    )
-    await cb.message.delete()

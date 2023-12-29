@@ -17,7 +17,6 @@ BACK_BUTTON = InlineKeyboardButton(text='🔙 Главная', callback_data='TO
 
 users_manage_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Управление пользователями", callback_data="user_worker_manage")],
-    [InlineKeyboardButton(text="Новые ползователи", callback_data="anonym_to_user")],
     [BACK_BUTTON]
 ])
 
@@ -76,3 +75,11 @@ def get_users_kb(users: list[User]):
     buttons.append(BACK_BUTTON)
     builder = builder.row(*buttons, width=1)
     return builder.as_markup()
+
+
+def register_user_kb(**data):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Активировать пользователя", callback_data=f"activate_none_user:{data.get('id')}:{data.get('username')}:{data.get('phone')}")],
+        [InlineKeyboardButton(text="Удалить пользователя", callback_data=f"remove_none_user:{data.get('user_id')}")],
+    ])
+    return keyboard

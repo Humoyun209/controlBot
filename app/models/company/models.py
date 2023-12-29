@@ -31,7 +31,7 @@ class Company(Base):
 class CompanyWorker(Base):
     __tablename__ = 'company_worker'
     
-    worker_id: Mapped[int] = mapped_column(ForeignKey("worker.id", ondelete="SET NULL"), primary_key=True)
+    worker_id: Mapped[int] = mapped_column(ForeignKey("worker.id", ondelete="CASCADE"), primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("company.id", ondelete="CASCADE"), primary_key=True)
     created: Mapped[datetime.datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
 
@@ -49,7 +49,7 @@ class CompanyState(Base):
     created: Mapped[datetime.datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', now())")
     )
-    worker_id: Mapped[int] = mapped_column(ForeignKey("worker.id", ondelete="SET NULL"))
+    worker_id: Mapped[int | None] = mapped_column(ForeignKey("worker.id", ondelete="SET NULL"))
     company_id: Mapped[int] = mapped_column(
         ForeignKey("company.id", ondelete="CASCADE")
     )

@@ -11,7 +11,10 @@ class BeginShiftState(StatesGroup):
     photo_group = State()
     
 
-class EndState(BeginShiftState):
+class EndShiftState(StatesGroup):
+    grams_of_tobacco = State()
+    summa = State()
+    photo_group = State()
     quantity_of_sold = State()
     promo_quantity = State()
     card = State()

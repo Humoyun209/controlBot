@@ -75,9 +75,19 @@ class CompanyDAO:
     @classmethod
     async def set_shift_to_begin(cls, company_id):
         async with async_session_maker() as session:
-            company_query = await session.execute(
+            await session.execute(
                 update(Company)
                 .values(live=True)
                 .where(Company.id == company_id, Company.live == False)
+            )
+            await session.commit()
+    
+    @classmethod
+    async def set_shift_to_end(cls, company_id):
+        async with async_session_maker() as session:
+            await session.execute(
+                update(Company)
+                .values(live=False)
+                .where(Company.id == company_id, Company.live == True)
             )
             await session.commit()

@@ -21,34 +21,21 @@ from states.shift import BeginShiftState
 from models.company.begin_shift_dao import BeginShiftDAO
 from models.company.company_dao import CompanyDAO
 
-from filters import IsUser
-from models.user.user_dao import UserDAO, WorkerDAO
+from filters import IsWorker
+from models.user.user_dao import UserDAO
+from models.user.worker_dao import WorkerDAO
 from config import settings_bot
 
 
 router = Router()
 
 
-@router.message(Command(commands=['start']), IsUser())
+@router.message(Command(commands=['start']), IsWorker())
 async def process_start_user(message: Message):
     await message.answer("You are - Worker")
 
 
-@router.message(Command(commands=['start']))
-async def process_start_user(message: Message, bot: Bot):
-    await UserDAO.create_user(
-        message.from_user.id,
-        message.from_user.username,
-        UserStatus.ANONYMOUS
-    )
-    await bot.send_message(
-        settings_bot.admin_id,
-        f"✅ Новый пользователь\n\n<b><i>ID: </i></b>{message.from_user.id}<b><i>\nUsername:</i></b> {message.from_user.username}"
-    )
-    await message.answer("You are - Anonymous Worker")
-
-
-@router.message(Command(commands=['begin_shift']), IsUser())
+@router.message(Command(commands=['begin_shift']), IsWorker())
 async def begin_shift_start(message: Message):
     user_id = message.from_user.id
     user = await UserDAO.get_user(user_id)
@@ -61,7 +48,7 @@ async def begin_shift_start(message: Message):
         await message.answer("Компании не найдено, чтобы закончить смену /end_shift")
     
 
-@router.callback_query(F.data.startswith("choose_company_for_begin_shift"), IsUser())
+@router.callback_query(F.data.startswith("choose_company_for_begin_shift"), IsWorker())
 async def choose_company_for_begin(cb: CallbackQuery):
     data = cb.data.split(":")
     worker_id, company_id = int(data[1]), int(data[2])
@@ -72,7 +59,7 @@ async def choose_company_for_begin(cb: CallbackQuery):
     await cb.message.delete()
 
 
-@router.callback_query(F.data.startswith("start_begin_shift:"), IsUser())
+@router.callback_query(F.data.startswith("start_begin_shift:"), IsWorker())
 async def start_state_for_begin_shift(cb: CallbackQuery, state: FSMContext):
     data = cb.data.split(":")
     worker_id, company_id = int(data[1]), int(data[2])
@@ -82,7 +69,7 @@ async def start_state_for_begin_shift(cb: CallbackQuery, state: FSMContext):
     await cb.message.delete()
 
 
-@router.message(F.photo, IsUser(), StateFilter(BeginShiftState.photo_group))
+@router.message(F.photo, IsWorker(), StateFilter(BeginShiftState.photo_group))
 async def get_begin_shift_photos(message: Message, state: FSMContext):
     data = await state.get_data()
     count_photo = data.get("count_photo")
@@ -101,7 +88,7 @@ async def get_begin_shift_photos(message: Message, state: FSMContext):
         await message.answer("Всё отлично!!!\nТеперь введите граммаж табаки: (В целых числах)")
     
 
-@router.message(IsUser(), StateFilter(BeginShiftState.grams_of_tobacco))
+@router.message(IsWorker(), StateFilter(BeginShiftState.grams_of_tobacco))
 async def input_begin_shift_grams_tabacko(message: Message, state: FSMContext):
     grams: str = message.text
     if not grams.isdigit():
@@ -112,7 +99,7 @@ async def input_begin_shift_grams_tabacko(message: Message, state: FSMContext):
         await message.answer("Отлично!\nтепер надо ввести сумму в кассе")
         
 
-@router.message(StateFilter(BeginShiftState.summa), IsUser())
+@router.message(StateFilter(BeginShiftState.summa), IsWorker())
 async def input_begin_shift_summa(message: Message, state: FSMContext):
     try:
         summa = decimal.Decimal(message.text)

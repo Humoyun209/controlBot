@@ -12,24 +12,16 @@ class UserDAO:
     async def get_user(cls, user_id: int) -> User:
         async with async_session_maker() as session:
             user = await session.execute(
-                select(User)
-                .where(User.id == user_id)
-                .options(joinedload(User.worker))
+                select(User).where(User.id == user_id).options(joinedload(User.worker))
             )
             return user.scalars().first()
-        
+
     @classmethod
-    async def create_user(cls, user_id, username, status: UserStatus):
-        user = await cls.get_user(user_id)
+    async def create_user(cls, **kwargs):
+        user = await cls.get_user(kwargs.get("id"))
         if user is None:
             async with async_session_maker() as session:
-                result = await session.execute(
-                    insert(User).values(
-                        id=user_id,
-                        username=username,
-                        status=status,
-                    )
-                )
+                result = await session.execute(insert(User).values(**kwargs))
                 await session.commit()
                 return result
         return user
@@ -39,7 +31,7 @@ class UserDAO:
         async with async_session_maker() as session:
             users = await session.execute(
                 select(User).where(
-                        User.status.in_([UserStatus.USER, UserStatus.ANONYMOUS]),
+                    User.status.in_([UserStatus.USER, UserStatus.ANONYMOUS]),
                 )
             )
             return users.scalars().all()
@@ -80,68 +72,10 @@ class UserDAO:
             await session.execute(query)
             await session.commit()
 
-
-class WorkerDAO:
     @classmethod
-    async def get_worker_by_id(cls, worker_id):
+    async def get_super_admin(cls) -> User:
         async with async_session_maker() as session:
-            user = await session.execute(
-                select(Worker).where(Worker.id == worker_id)
+            admin = await session.execute(
+                select(User).where(User.status == UserStatus.SUPER)
             )
-            return user.scalars().first()
-    
-    @classmethod
-    async def get_worker_with_companies_for_shift(cls, worker_id, live: bool) -> Worker:
-        async with async_session_maker() as session:
-            worker = await session.execute(
-                select(Worker.id, Company.id, Company.name)
-                .select_from(Worker)
-                .join(CompanyWorker, CompanyWorker.worker_id == Worker.id)
-                .join(Company, Company.id == CompanyWorker.company_id)
-                .where(Worker.id == worker_id, Company.live == live, Company.is_active == True)
-            )
-            return worker.all()
-
-    async def worker_list(cls):
-        async with async_session_maker() as session:
-            result = await session.execute(
-                select(Worker).where(Worker.is_active == True)
-            )
-            return result.scalars().all()
-
-    @classmethod
-    async def get_worker_by_user_id(cls, user_id: int) -> Worker:
-        async with async_session_maker() as session:
-            worker = await session.execute(select(Worker).where(Worker.user_id == user_id))
-            return worker.scalars().first()
-
-    @classmethod
-    async def worker_create(cls, user_id: int) -> Worker:
-        async with async_session_maker() as session:
-            worker = await cls.get_worker_by_user_id(user_id)
-            if not worker:
-                query = insert(Worker).values(user_id=user_id)
-                await session.execute(query)
-                await session.commit()
-                worker = await cls.get_worker_by_user_id(user_id)
-            return worker
-
-    @classmethod
-    async def toggle_company_to_worker(cls, worker_id, company_name: str):
-        async with async_session_maker() as session:
-            company = await session.execute(
-                select(Company).where(Company.name == company_name)
-            )
-            company = company.scalars().first()
-            result = await session.execute(
-                select(Worker)
-                .where(Worker.id == worker_id)
-                .options(selectinload(Worker.companies))
-            )
-            worker: Worker = result.scalars().first()
-            if company not in worker.companies:
-                worker.companies.append(company)
-            else:
-                worker.companies.remove(company)
-            await session.commit()
-            
+            return admin.scalars().first()

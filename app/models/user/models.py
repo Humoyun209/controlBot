@@ -37,8 +37,7 @@ class Worker(Base):
     __tablename__ = "worker"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    salary: Mapped[Decimal | None]
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_active: Mapped[bool] = mapped_column(default=True)
     user: Mapped["User"] = relationship("User", back_populates="worker", uselist=False)
     companies: Mapped[list["Company"]] = relationship(
@@ -52,3 +51,9 @@ class Worker(Base):
 
     def __repr__(self) -> str:
         return f"{self.id}#Worker"
+
+
+# class WorkerSalary(Base):
+#     salary: Mapped[Decimal]
+#     worker_id: Mapped[int] = mapped_column(ForeignKey("Worker.id", ondelete="CASCADE"))
+#     begin_shift_id: Mapped[int] = mapped_column(ForeignKey("Worker.id", ondelete="CASCADE"))
