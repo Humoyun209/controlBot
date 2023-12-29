@@ -1,4 +1,5 @@
 import asyncio
+import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
 from models.user.models import Worker, User
@@ -11,19 +12,17 @@ from db import async_session_maker
 
 async def query():
     async with async_session_maker() as session:
-        # query = (
-        #     select(User.id, Worker.id, Worker.user_id)
-        #     .select_from(User)
-        #     .join(Worker, Worker.user_id == User.id)
-        #     .where(User.id == 6652099976)
-        # )
+        users = await session.execute(
+                select(
+                    EndShift.id, EndShift.grams_of_tobacco,
+                    EndShift.summa, EndShift.quantity_of_sold,
+                    EndShift.promo_quantity, EndShift.card,
+                    EndShift.cash, EndShift.in_club,
+                    EndShift.in_club_card, EndShift.in_club_cash,
+                    EndShift.tips
+                )
+                .select_from(EndShift)
+                .where(EndShift.company_id == 2)
+            )
+        print(users.scalars().all()[1].worker)
 
-        query = (
-            select(User).where(User.id == 66520999763).options(joinedload(User.worker))
-        )
-        begin_shift = await session.execute(query)
-
-        print(begin_shift.scalars().first().worker)
-
-
-asyncio.run(query())

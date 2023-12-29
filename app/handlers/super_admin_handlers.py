@@ -2,13 +2,8 @@ from aiogram import Router, F
 from aiogram.types import (
     Message,
     CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
 )
 from aiogram.filters import Command
-from keyboards.users_kb import get_users_kb
 from models.user.user_dao import UserDAO
 
 

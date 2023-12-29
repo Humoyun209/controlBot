@@ -9,6 +9,16 @@ from sqlalchemy.orm import selectinload, joinedload
 
 class UserDAO:
     @classmethod
+    async def update_user(cls, user_id, **kwargs):
+        async with async_session_maker() as session:
+            await session.execute(
+                update(User)
+                .where(User.id == user_id)
+                .values(**kwargs)
+            )
+            await session.commit()
+    
+    @classmethod
     async def get_user(cls, user_id: int) -> User:
         async with async_session_maker() as session:
             user = await session.execute(
@@ -79,3 +89,32 @@ class UserDAO:
                 select(User).where(User.status == UserStatus.SUPER)
             )
             return admin.scalars().first()
+
+    @classmethod
+    async def get_workers(cls):
+        async with async_session_maker() as session:
+            users = await session.execute(
+                select(User)
+                .options(joinedload(User.worker))
+                .where(User.worker != None)
+            )
+            return users.scalars().all()
+    
+    @classmethod
+    async def get_admins(cls):
+        async with async_session_maker() as session:
+            users = await session.execute(
+                select(User)
+                .where(User.status == UserStatus.ADMIN)
+            )
+            return users.scalars().all()
+    
+    @classmethod
+    async def get_users(cls):
+        async with async_session_maker() as session:
+            users = await session.execute(
+                select(User)
+                .options(joinedload(User.worker))
+                .where(User.status == UserStatus.USER, User.worker == None)
+            )
+            return users.scalars().all()

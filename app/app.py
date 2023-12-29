@@ -11,6 +11,7 @@ from handlers.user_handlers.user_register import router as user_register_router
 from config import settings_bot
 
 
+
 async def main():
     bot = Bot(token=settings_bot.token, parse_mode='HTML')
     dp = Dispatcher()

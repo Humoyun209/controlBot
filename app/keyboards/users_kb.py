@@ -5,6 +5,7 @@ from aiogram.types import (
     KeyboardButton,
 )
 from aiogram.utils.keyboard import KeyboardBuilder, InlineKeyboardBuilder
+from filters import IsWorker, IsUser, IsAdmin
 from models.enums import UserStatus
 from models.user.models import Worker
 from models.user.models import User
@@ -16,19 +17,21 @@ BACK_BUTTON = InlineKeyboardButton(text='🔙 Главная', callback_data='TO
 
 
 users_manage_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="Управление пользователями", callback_data="user_worker_manage")],
+    [InlineKeyboardButton(text="Кальяншики", callback_data="to_worker_user_manage")],
+    [InlineKeyboardButton(text="Недавно активитированные и юзеры", callback_data="to_what_user_manage")],
+    [InlineKeyboardButton(text="Админы", callback_data="to_admin_user_manage")],
     [BACK_BUTTON]
 ])
 
 
-def users_list_kb(anonym_users: list[User]):
+def users_list_kb(users: list[User], prefix: str):
     builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
-    for user in anonym_users:
+    for user in users:
         buttons.append(
             InlineKeyboardButton(
-                text=f"{user.username} | {user.phone} | {'Аноним' if user.status == UserStatus.ANONYMOUS else 'Пользователь'}", 
-                callback_data=f"user_to_actions: {user.id}"
+                text=f"{user.username} - {user.phone}", 
+                callback_data=f"{prefix}:{user.id}"
             )
         )
     buttons.append(BACK_BUTTON)
@@ -36,11 +39,41 @@ def users_list_kb(anonym_users: list[User]):
     return builder.as_markup()
 
 
-def user_actions_kb(user_id):
+def hookah_users_kb(users):
+    return users_list_kb(users, "hookah_to_actions")
+
+
+def regular_users_kb(users):
+    return users_list_kb(users, "user_to_actions")
+
+
+def admin_users_kb(users):
+    return users_list_kb(users, "admin_to_actions")
+
+
+def admin_actions_kb(user_id):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Изменить статус на юзер", callback_data=f"admin_status_change:{user_id}")],
+        [InlineKeyboardButton(text="Удалить админа", callback_data=f"user_delete:{user_id}")],
+        [BACK_BUTTON],
+    ])
+    return keyboard
+
+
+def hookah_actions_kb(user_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Добавить в компании", callback_data=f"user_invite_companies:{user_id}")],
         [InlineKeyboardButton(text="Удалить пользователя", callback_data=f"user_delete:{user_id}")],
+        [BACK_BUTTON],
+    ])
+    return keyboard
+
+
+def user_actions_kb(user_id):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Добавить в компании", callback_data=f"user_invite_companies:{user_id}")],
         [InlineKeyboardButton(text="Назначить админом", callback_data=f"user_to_admin:{user_id}")],
+        [InlineKeyboardButton(text="Удалить пользователя", callback_data=f"user_delete:{user_id}")],
         [BACK_BUTTON],
     ])
     
